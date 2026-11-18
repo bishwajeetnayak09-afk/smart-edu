@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Subjects & Faculty Allocations - SmartEdu Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Manage Curriculum Subjects & Faculty</h1>
+            <p class="text-xs text-slate-500 mt-1">Define course catalog, set credits, and assign faculty instructors to subjects</p>
+        </div>
+        <button onclick="document.getElementById('createSubjectModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Add New Subject</span>
+        </button>
+    </div>
+
+    <!-- Subjects Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">Code & Name</th>
+                        <th class="px-6 py-3.5">Department</th>
+                        <th class="px-6 py-3.5 text-center">Semester / Credits</th>
+                        <th class="px-6 py-3.5">Assigned Faculty Instructor</th>
+                        <th class="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for subj in subjects %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 font-mono font-bold">{{ subj.code }}</span>
+                                <div>
+                                    <span class="font-bold text-slate-900 block">{{ subj.name }}</span>
+                                    <p class="text-slate-400 text-[11px] line-clamp-1 max-w-sm">{{ subj.description }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500">
+                            {{ subj.department }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="font-semibold text-slate-700">Sem {{ subj.semester }}</span> • 
+                            <span class="text-slate-500 font-mono">{{ subj.credits }} Cr</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <!-- In-place assign faculty form -->
+                            <form method="POST" action="{{ url_for('admin_subjects') }}" class="flex items-center space-x-2">
+                                <input type="hidden" name="action" value="assign_faculty">
+                                <input type="hidden" name="subject_id" value="{{ subj.id }}">
+                                <select name="faculty_id" onchange="this.form.submit()" class="p-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                                    <option value="">-- Unassigned --</option>
+                                    {% for fac in faculty_list %}
+                                    <option value="{{ fac.id }}" {% if subj.faculty_id == fac.id %}selected{% endif %}>
+                                        {{ fac.full_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <form method="POST" action="{{ url_for('admin_subjects') }}" class="inline" onsubmit="return confirm('Remove subject {{ subj.name }}? This will remove its materials and quizzes.');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="subject_id" value="{{ subj.id }}">
+                                <button type="submit" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition">
+                                    Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Add New Subject -->
+<div id="createSubjectModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Add New Subject</h3>
+            <button onclick="document.getElementById('createSubjectModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_subjects') }}" class="space-y-4 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Subject Code</label>
+                    <input type="text" name="code" placeholder="e.g. CS401" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500 uppercase">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Credits</label>
+                    <input type="number" name="credits" value="4" min="1" max="6" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Subject Name</label>
+                <input type="text" name="name" placeholder="e.g. Artificial Intelligence" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Department</label>
+                    <input type="text" name="department" value="Computer Science" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Semester</label>
+                    <input type="number" name="semester" value="5" min="1" max="8" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Assign Faculty Instructor</label>
+                <select name="faculty_id" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                    <option value="">-- Assign Later --</option>
+                    {% for fac in faculty_list %}
+                    <option value="{{ fac.id }}">{{ fac.full_name }} ({{ fac.department }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Description</label>
+                <textarea name="description" rows="3" placeholder="Course syllabus overview..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('createSubjectModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow">
+                    Create Subject
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

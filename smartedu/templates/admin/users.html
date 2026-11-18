@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Accounts - SmartEdu Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Manage Accounts & Access</h1>
+            <p class="text-xs text-slate-500 mt-1">Supervise students, faculty members, and administrative staff accounts</p>
+        </div>
+        <button onclick="document.getElementById('createUserModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-user-plus text-xs"></i>
+            <span>Create New User</span>
+        </button>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold w-fit">
+        <a href="{{ url_for('admin_users') }}"
+            class="px-3.5 py-1.5 rounded-lg transition {% if not current_filter %}bg-white text-slate-900 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            All Users
+        </a>
+        <a href="{{ url_for('admin_users', role='student') }}"
+            class="px-3.5 py-1.5 rounded-lg transition {% if current_filter == 'student' %}bg-blue-600 text-white shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            Students Only
+        </a>
+        <a href="{{ url_for('admin_users', role='faculty') }}"
+            class="px-3.5 py-1.5 rounded-lg transition {% if current_filter == 'faculty' %}bg-emerald-600 text-white shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            Faculty Only
+        </a>
+        <a href="{{ url_for('admin_users', role='admin') }}"
+            class="px-3.5 py-1.5 rounded-lg transition {% if current_filter == 'admin' %}bg-purple-600 text-white shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+            Admins
+        </a>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">User</th>
+                        <th class="px-6 py-3.5">Identifier / ID</th>
+                        <th class="px-6 py-3.5">Role</th>
+                        <th class="px-6 py-3.5">Department</th>
+                        <th class="px-6 py-3.5 text-center">Status</th>
+                        <th class="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for u in users %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-6 py-4 flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs
+                                {% if u.role == 'student' %}bg-blue-100 text-blue-700
+                                {% elif u.role == 'faculty' %}bg-emerald-100 text-emerald-700
+                                {% else %}bg-purple-100 text-purple-700{% endif %}">
+                                {{ u.full_name[:2].upper() }}
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-900 block">{{ u.full_name }}</span>
+                                <span class="text-slate-400 font-mono text-[11px]">{{ u.username }} • {{ u.email }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-mono text-slate-600">
+                            {{ u.identifier or 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase
+                                {% if u.role == 'student' %}bg-blue-50 text-blue-700 border border-blue-200
+                                {% elif u.role == 'faculty' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                {% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500">
+                            {{ u.department }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if u.is_active_account %}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                Disabled
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <!-- Toggle status -->
+                            <form method="POST" action="{{ url_for('admin_users') }}" class="inline">
+                                <input type="hidden" name="action" value="toggle_status">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[11px] transition">
+                                    {% if u.is_active_account %}Disable{% else %}Enable{% endif %}
+                                </button>
+                            </form>
+
+                            {% if u.id != current_user.id %}
+                            <!-- Delete user -->
+                            <form method="POST" action="{{ url_for('admin_users') }}" class="inline" onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition">
+                                    Delete
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Create User -->
+<div id="createUserModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Provision New User Account</h3>
+            <button onclick="document.getElementById('createUserModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_users') }}" class="space-y-4 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Account Role</label>
+                    <select name="role" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Identifier (Roll / Faculty ID)</label>
+                    <input type="text" name="identifier" placeholder="STU-009 or FAC-205" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Full Name</label>
+                <input type="text" name="full_name" placeholder="e.g. Elena Rostova" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Username</label>
+                    <input type="text" name="username" placeholder="e.g. elena_r" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Email</label>
+                    <input type="email" name="email" placeholder="elena@smartedu.edu" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Initial Password</label>
+                    <input type="password" name="password" value="password123" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Department</label>
+                    <input type="text" name="department" value="Computer Science" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('createUserModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow">
+                    Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

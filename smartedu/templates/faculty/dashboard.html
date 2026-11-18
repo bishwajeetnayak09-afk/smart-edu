@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Dashboard - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Faculty Header -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-2xl font-bold shadow-md shadow-emerald-500/20">
+                {{ current_user.full_name[:2].upper() }}
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-2xl font-extrabold text-slate-900">Welcome, {{ current_user.full_name }}</h1>
+                    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 font-mono">{{ current_user.identifier }}</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                    Faculty Department: {{ current_user.department }} • Assigned to {{ taught_subjects|length }} Courses
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('faculty_attendance') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-500/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-clipboard-user"></i>
+                <span>Mark Today's Attendance</span>
+            </a>
+            <a href="{{ url_for('faculty_quizzes') }}" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center space-x-2">
+                <i class="fa-solid fa-square-plus text-xs"></i>
+                <span>Create Quiz</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Enrolled Students</span>
+                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900">{{ total_students }}</div>
+            <div class="text-xs text-slate-500 mt-1">Active learners across subjects</div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Struggling Alert</span>
+                <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-rose-600">{{ struggling_students|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">
+                <a href="{{ url_for('faculty_students') }}?filter=struggling" class="text-rose-600 font-semibold hover:underline">View radar list &rarr;</a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Quizzes & Tests</span>
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900">{{ total_quizzes }}</div>
+            <div class="text-xs text-slate-500 mt-1">Published assessments</div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">To Grade</span>
+                <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-file-signature"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-slate-900">{{ pending_submissions }}</div>
+            <div class="text-xs text-slate-500 mt-1">
+                <a href="{{ url_for('faculty_assignments') }}" class="text-purple-600 font-semibold hover:underline">Review submissions &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Struggling Students Radar Alert Box -->
+    {% if struggling_students %}
+    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-rose-900">Struggling Students Early Intervention Radar</h2>
+                    <p class="text-xs text-rose-700">Identified based on score &lt; 50% or attendance &lt; 75% in your courses</p>
+                </div>
+            </div>
+            <a href="{{ url_for('faculty_students') }}?filter=struggling" class="px-3 py-1.5 rounded-lg bg-rose-200 hover:bg-rose-300 text-rose-800 text-xs font-bold transition">
+                View All Struggling ({{ struggling_students|length }}) &rarr;
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for item in struggling_students[:4] %}
+            <div class="bg-white rounded-xl p-4 border border-rose-200/80 shadow-sm flex items-center justify-between text-xs">
+                <div class="space-y-1">
+                    <span class="font-bold text-slate-900 text-sm block">{{ item.student.full_name }}</span>
+                    <span class="text-slate-500 text-[11px] font-mono">{{ item.student.identifier }} • Sem {{ item.student.semester }}</span>
+                    <div class="text-[11px] text-rose-700">
+                        Avg Score: <strong>{{ item.overall_score }}%</strong> | Attendance: <strong>{{ item.overall_attendance }}%</strong>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 block mb-2">High Risk</span>
+                    <a href="{{ url_for('faculty_students') }}" class="text-[11px] font-semibold text-brand-600 hover:underline">View Record &rarr;</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Assigned Courses & Quick Actions Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Assigned Courses (2 cols) -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Your Assigned Subjects</h2>
+                        <p class="text-xs text-slate-500">Manage materials, quizzes, and attendance for each course</p>
+                    </div>
+                    <a href="{{ url_for('faculty_reports') }}" class="text-xs font-semibold text-emerald-600 hover:underline">Class Reports &rarr;</a>
+                </div>
+
+                <div class="space-y-4">
+                    {% for subj in taught_subjects %}
+                    <div class="p-5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-white transition space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">{{ subj.code }}</span>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">{{ subj.name }}</h3>
+                                    <span class="text-xs text-slate-500">{{ subj.enrolled_students.count() }} Enrolled Students • {{ subj.credits }} Credits</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-slate-400">{{ subj.materials|length }} Materials</span>
+                        </div>
+
+                        <div class="flex items-center space-x-2 pt-2 border-t border-slate-200/60 text-xs">
+                            <a href="{{ url_for('faculty_attendance', subject_id=subj.id) }}" class="px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 font-semibold transition">
+                                <i class="fa-solid fa-clipboard-user mr-1 text-cyan-600"></i>Attendance
+                            </a>
+                            <a href="{{ url_for('faculty_materials') }}" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-semibold transition">
+                                <i class="fa-solid fa-cloud-arrow-up mr-1 text-indigo-600"></i>Upload Notes
+                            </a>
+                            <a href="{{ url_for('faculty_quizzes') }}" class="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold transition">
+                                <i class="fa-solid fa-square-plus mr-1 text-amber-600"></i>New Quiz
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Announcements & Quick Actions -->
+        <div class="space-y-6">
+
+            <!-- Post Quick Announcement -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-bullhorn text-amber-500 mr-2"></i>Post Announcement
+                    </h3>
+                    <a href="{{ url_for('faculty_announcements') }}" class="text-xs text-brand-600 hover:underline">View all</a>
+                </div>
+
+                <form method="POST" action="{{ url_for('faculty_announcements') }}" class="space-y-3 text-xs">
+                    <div>
+                        <select name="subject_id" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="all">Broadcast to All Students</option>
+                            {% for subj in taught_subjects %}
+                            <option value="{{ subj.id }}">{{ subj.code }} - {{ subj.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <input type="text" name="title" placeholder="Announcement Title" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <div>
+                        <textarea name="content" rows="3" placeholder="Message content..." required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+                        Broadcast to Class
+                    </button>
+                </form>
+            </div>
+
+            <!-- Recent Published Announcements -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Your Recent Posts</h4>
+                <div class="space-y-2">
+                    {% for ann in recent_announcements %}
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1">
+                        <span class="font-bold text-slate-800 block">{{ ann.title }}</span>
+                        <p class="text-[11px] text-slate-500 line-clamp-2">{{ ann.content }}</p>
+                        <span class="text-[10px] text-slate-400 block pt-1">{{ ann.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-400">No announcements posted yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Performance & Weak Subject Analysis - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Academic Marks & Performance</h1>
+            <p class="text-xs text-slate-500 mt-1">Holistic diagnostic analytics, score trends, and AI weak-subject detection</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200">
+                GPA / Aggregate: {{ analysis.overall_score }}%
+            </span>
+            <span class="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                Attendance: {{ analysis.overall_attendance }}%
+            </span>
+        </div>
+    </div>
+
+    <!-- AI Diagnostic Report Banner -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">AI Weak Subjects & Remediation Plan</h2>
+                    <p class="text-xs text-slate-400">Automated diagnostic based on quiz attempts, assignment grades, and class attendance</p>
+                </div>
+            </div>
+            {% if analysis.weak_subjects %}
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                {{ analysis.weak_subjects|length }} Focus Area(s) Detected
+            </span>
+            {% else %}
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                Optimal Standing
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="space-y-2">
+            {% for rec in analysis.recommendations %}
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed flex items-start space-x-2.5">
+                <i class="fa-solid fa-arrow-right text-brand-600 mt-0.5 shrink-0"></i>
+                <div>{{ rec }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Analytics Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Subject Score Comparison Bar Chart -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Quiz vs Assignment Scores</h3>
+                <span class="text-xs text-slate-400">By Subject</span>
+            </div>
+            <div class="h-64">
+                <canvas id="scoresBarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Radar Chart for Subject Balance -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Academic Radar Diagnostic</h3>
+                <span class="text-xs text-slate-400">Score vs Attendance Balance</span>
+            </div>
+            <div class="h-64">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Granular Table Breakdown -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="p-5 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Detailed Subject Ledger</h3>
+            <p class="text-xs text-slate-400">Individual performance metrics and attendance ratios</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">Subject</th>
+                        <th class="px-6 py-3.5">Faculty</th>
+                        <th class="px-6 py-3.5 text-center">Quiz Score</th>
+                        <th class="px-6 py-3.5 text-center">Assignment Score</th>
+                        <th class="px-6 py-3.5 text-center">Attendance %</th>
+                        <th class="px-6 py-3.5 text-center">Composite Score</th>
+                        <th class="px-6 py-3.5 text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for subj in analysis.subjects_breakdown %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-6 py-4 font-bold text-slate-900">
+                            {{ subj.code }} - {{ subj.name }}
+                        </td>
+                        <td class="px-6 py-4 text-slate-500">
+                            {{ subj.faculty_name }}
+                        </td>
+                        <td class="px-6 py-4 text-center font-semibold">
+                            {{ subj.quiz_avg }}%
+                        </td>
+                        <td class="px-6 py-4 text-center font-semibold">
+                            {{ subj.assignment_avg }}%
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="font-bold {% if subj.attendance_pct < 75 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                {{ subj.attendance_pct }}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center font-black text-brand-600">
+                            {{ subj.composite_score }}%
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
+                                {% if subj.is_weak %}bg-rose-100 text-rose-800
+                                {% elif subj.composite_score >= 85 %}bg-emerald-100 text-emerald-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ subj.status_label }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const breakdownData = {{ analysis.subjects_breakdown|tojson }};
+    const labels = breakdownData.map(d => d.code);
+    const quizScores = breakdownData.map(d => d.quiz_avg);
+    const assignmentScores = breakdownData.map(d => d.assignment_avg);
+    const compositeScores = breakdownData.map(d => d.composite_score);
+    const attendanceScores = breakdownData.map(d => d.attendance_pct);
+
+    // 1. Bar Chart
+    const ctxBar = document.getElementById('scoresBarChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Quiz Avg (%)',
+                    data: quizScores,
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Assignment Score (%)',
+                    data: assignmentScores,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // 2. Radar Chart
+    const ctxRadar = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Composite Score',
+                    data: compositeScores,
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgb(99, 102, 241)',
+                    pointBackgroundColor: 'rgb(99, 102, 241)'
+                },
+                {
+                    label: 'Attendance %',
+                    data: attendanceScores,
+                    backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                    borderColor: 'rgb(14, 165, 233)',
+                    pointBackgroundColor: 'rgb(14, 165, 233)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

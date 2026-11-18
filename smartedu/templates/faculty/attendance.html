@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Date Picker -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Mark & Manage Attendance</h1>
+            <p class="text-xs text-slate-500 mt-1">Record daily lecture attendance and track student presence logs</p>
+        </div>
+
+        <!-- Filter bar for Subject and Date -->
+        <form method="GET" action="{{ url_for('faculty_attendance') }}" class="flex flex-wrap items-center gap-3">
+            <div>
+                <select name="subject_id" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 bg-white">
+                    {% for s in taught_subjects %}
+                    <option value="{{ s.id }}" {% if current_subject and current_subject.id == s.id %}selected{% endif %}>
+                        {{ s.code }} - {{ s.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <input type="date" name="date" value="{{ current_date.strftime('%Y-%m-%d') }}" onchange="this.form.submit()"
+                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500">
+            </div>
+        </form>
+    </div>
+
+    {% if current_subject %}
+    <!-- Active Course Roster Form -->
+    <form method="POST" action="{{ url_for('faculty_attendance', subject_id=current_subject.id) }}" class="space-y-6">
+        <input type="hidden" name="date" value="{{ current_date.strftime('%Y-%m-%d') }}">
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">
+                        Attendance Roster for {{ current_subject.code }}: {{ current_subject.name }}
+                    </h2>
+                    <span class="text-xs text-slate-400">Date: {{ current_date.strftime('%A, %B %d, %Y') }} • {{ students|length }} Enrolled Students</span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="markAll('present')" class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition">
+                        <i class="fa-solid fa-check-double mr-1"></i>All Present
+                    </button>
+                    <button type="button" onclick="markAll('absent')" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition">
+                        <i class="fa-solid fa-xmark mr-1"></i>All Absent
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-3.5">Student</th>
+                            <th class="px-6 py-3.5">Roll Number</th>
+                            <th class="px-6 py-3.5 text-center">Status</th>
+                            <th class="px-6 py-3.5">Remarks (Optional)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for st in students %}
+                        {% set existing = existing_records.get(st.id) %}
+                        {% set current_status = existing.status if existing else 'present' %}
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="px-6 py-4 font-bold text-slate-900 flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-bold">
+                                    {{ st.full_name[:2].upper() }}
+                                </div>
+                                <span>{{ st.full_name }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500 font-mono">
+                                {{ st.identifier }}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex items-center space-x-2 bg-slate-100 p-1 rounded-xl">
+                                    <label class="px-2.5 py-1 rounded-lg cursor-pointer text-xs font-semibold has-[:checked]:bg-emerald-600 has-[:checked]:text-white transition">
+                                        <input type="radio" name="status_{{ st.id }}" value="present" {% if current_status == 'present' %}checked{% endif %} class="hidden status-radio status-present">
+                                        Present
+                                    </label>
+                                    <label class="px-2.5 py-1 rounded-lg cursor-pointer text-xs font-semibold has-[:checked]:bg-amber-500 has-[:checked]:text-white transition">
+                                        <input type="radio" name="status_{{ st.id }}" value="late" {% if current_status == 'late' %}checked{% endif %} class="hidden status-radio status-late">
+                                        Late
+                                    </label>
+                                    <label class="px-2.5 py-1 rounded-lg cursor-pointer text-xs font-semibold has-[:checked]:bg-rose-600 has-[:checked]:text-white transition">
+                                        <input type="radio" name="status_{{ st.id }}" value="absent" {% if current_status == 'absent' %}checked{% endif %} class="hidden status-radio status-absent">
+                                        Absent
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <input type="text" name="remarks_{{ st.id }}" value="{{ existing.remarks if existing and existing.remarks else '' }}"
+                                    placeholder="e.g. Excused, Active participation..."
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-5 border-t border-slate-100 flex items-center justify-end">
+                <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-save text-xs"></i>
+                    <span>Save Attendance Records</span>
+                </button>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function markAll(status) {
+        const radios = document.querySelectorAll(`.status-${status}`);
+        radios.forEach(r => {
+            r.checked = true;
+            // trigger change style
+            r.dispatchEvent(new Event('change'));
+        });
+    }
+</script>
+{% endblock %}

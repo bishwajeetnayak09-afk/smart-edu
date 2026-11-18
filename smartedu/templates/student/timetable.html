@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Personalized Study Timetable - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Personalized Study Timetable</h1>
+            <p class="text-xs text-slate-500 mt-1">Balanced weekly schedule combining institutional lectures, labs, and AI-tailored study blocks</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="document.getElementById('addSlotModal').classList.remove('hidden')"
+                class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Add Study Slot</span>
+            </button>
+            <a href="{{ url_for('student_ai_assistant') }}?query=Generate%20personalized%20study%20timetable&mode=timetable"
+                class="px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 transition flex items-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+                <span>AI Timetable Advice</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- AI Personalized Recommendation Banner -->
+    <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg space-y-3">
+        <div class="flex items-center space-x-2 text-purple-200 text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-brain text-amber-300"></i>
+            <span>AI Personalized Schedule Engine</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-white/10 rounded-xl p-3 backdrop-blur border border-white/10">
+                <span class="text-purple-300 block font-semibold mb-1">🎯 Weak Subjects Priority</span>
+                {% if analysis.weak_subjects %}
+                    <p class="text-slate-200">Recommended 2.5 hrs extra weekly study for: <strong>{{ analysis.weak_subjects[0].name }}</strong></p>
+                {% else %}
+                    <p class="text-slate-200">Good distribution across subjects. Maintain 1.5 hrs daily active recall.</p>
+                {% endif %}
+            </div>
+            <div class="bg-white/10 rounded-xl p-3 backdrop-blur border border-white/10">
+                <span class="text-purple-300 block font-semibold mb-1">⏱️ Optimal Study Rhythm</span>
+                <p class="text-slate-200">25 min deep focus + 5 min break (Pomodoro). Max 3 hours continuous session.</p>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3 backdrop-blur border border-white/10">
+                <span class="text-purple-300 block font-semibold mb-1">📈 Review Day</span>
+                <p class="text-slate-200">Saturday mornings reserved for self-testing and SmartEdu quizzes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Days Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for day in days %}
+        {% set slots = timetable_by_day.get(day, []) %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                        <i class="fa-regular fa-calendar-day text-brand-600 mr-2"></i>{{ day }}
+                    </h3>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        {{ slots|length }} Slots
+                    </span>
+                </div>
+
+                <div class="space-y-2.5">
+                    {% for slot in slots %}
+                    <div class="p-3 rounded-xl border text-xs space-y-1.5 relative group
+                        {% if slot.activity_type == 'Lecture' %}bg-blue-50/70 border-blue-200 text-blue-950
+                        {% elif slot.activity_type == 'Lab Session' %}bg-emerald-50/70 border-emerald-200 text-emerald-950
+                        {% elif slot.activity_type == 'Self Study' %}bg-purple-50/70 border-purple-200 text-purple-950
+                        {% else %}bg-amber-50/70 border-amber-200 text-amber-950{% endif %}">
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-[11px] font-mono">
+                                {{ slot.start_time }} - {{ slot.end_time }}
+                            </span>
+                            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded
+                                {% if slot.activity_type == 'Lecture' %}bg-blue-200/80 text-blue-800
+                                {% elif slot.activity_type == 'Lab Session' %}bg-emerald-200/80 text-emerald-800
+                                {% elif slot.activity_type == 'Self Study' %}bg-purple-200/80 text-purple-800
+                                {% else %}bg-amber-200/80 text-amber-800{% endif %}">
+                                {{ slot.activity_type }}
+                            </span>
+                        </div>
+
+                        <div class="font-bold text-xs">{{ slot.subject_name }}</div>
+                        <div class="text-[11px] opacity-70 flex items-center justify-between">
+                            <span><i class="fa-solid fa-location-dot mr-1"></i>{{ slot.room }}</span>
+                            {% if slot.is_custom %}
+                            <form method="POST" action="{{ url_for('student_delete_slot', slot_id=slot.id) }}" class="inline" onsubmit="return confirm('Remove slot?');">
+                                <button type="submit" class="text-rose-600 hover:text-rose-800 font-bold" title="Delete custom slot">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-6 text-slate-400 text-xs italic">
+                        No scheduled sessions. Great day for self-study!
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button onclick="openModalForDay('{{ day }}')" class="w-full mt-3 py-2 border border-dashed border-slate-300 hover:border-brand-500 rounded-xl text-slate-500 hover:text-brand-600 text-xs font-semibold transition flex items-center justify-center space-x-1">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                <span>Add Slot for {{ day }}</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Add Custom Timetable Slot -->
+<div id="addSlotModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Add Custom Timetable Slot</h3>
+            <button onclick="document.getElementById('addSlotModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('student_timetable') }}" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Day of Week</label>
+                <select name="day_of_week" id="modalDaySelect" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500 bg-white">
+                    {% for day in days %}
+                    <option value="{{ day }}">{{ day }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Start Time</label>
+                    <input type="time" name="start_time" value="16:00" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">End Time</label>
+                    <input type="time" name="end_time" value="17:30" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Subject / Activity Name</label>
+                <input type="text" name="subject_name" placeholder="e.g. Tree Traversal Revision, SQL Practice" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Activity Type</label>
+                    <select name="activity_type" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500 bg-white">
+                        <option value="Self Study">Self Study</option>
+                        <option value="Practice/Quiz">Practice / Quiz</option>
+                        <option value="Lecture">Lecture</option>
+                        <option value="Lab Revision">Lab Revision</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Location / Room</label>
+                    <input type="text" name="room" value="Library / Dorm" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('addSlotModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow">
+                    Save Slot
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModalForDay(day) {
+        document.getElementById('modalDaySelect').value = day;
+        document.getElementById('addSlotModal').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

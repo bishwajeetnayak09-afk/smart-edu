@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartEdu - Intelligent Academic Platform{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons & FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-3 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-graduation-cap text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold bg-gradient-to-r from-brand-700 via-indigo-600 to-indigo-800 bg-clip-text text-transparent">SmartEdu</span>
+                            <span class="hidden md:inline-block ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-50 text-brand-700 border border-brand-200/60">v2.5</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links for Logged in Users -->
+                {% if current_user.is_authenticated %}
+                <nav class="hidden lg:flex items-center space-x-1">
+                    {% if current_user.is_student %}
+                        <a href="{{ url_for('student_dashboard') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-chart-pie mr-1.5 text-brand-500"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('student_subjects') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-book-open mr-1.5 text-indigo-500"></i>Subjects & Notes
+                        </a>
+                        <a href="{{ url_for('student_ai_assistant') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-purple-600"></i>AI Study Assistant
+                        </a>
+                        <a href="{{ url_for('student_quizzes') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-list-check mr-1.5 text-emerald-500"></i>Quizzes
+                        </a>
+                        <a href="{{ url_for('student_assignments') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-file-signature mr-1.5 text-amber-500"></i>Assignments
+                        </a>
+                        <a href="{{ url_for('student_performance') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-gauge-high mr-1.5 text-rose-500"></i>Performance
+                        </a>
+                        <a href="{{ url_for('student_attendance') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-calendar-check mr-1.5 text-cyan-600"></i>Attendance
+                        </a>
+                        <a href="{{ url_for('student_timetable') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-clock mr-1.5 text-blue-500"></i>Timetable
+                        </a>
+                    {% elif current_user.is_faculty %}
+                        <a href="{{ url_for('faculty_dashboard') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-table-columns mr-1.5 text-brand-500"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('faculty_students') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-user-graduate mr-1.5 text-emerald-500"></i>Students Radar
+                        </a>
+                        <a href="{{ url_for('faculty_attendance') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-clipboard-user mr-1.5 text-cyan-600"></i>Mark Attendance
+                        </a>
+                        <a href="{{ url_for('faculty_materials') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-indigo-500"></i>Upload Materials
+                        </a>
+                        <a href="{{ url_for('faculty_quizzes') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-square-plus mr-1.5 text-amber-500"></i>Create Quizzes
+                        </a>
+                        <a href="{{ url_for('faculty_assignments') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-stamp mr-1.5 text-rose-500"></i>Assignments & Grades
+                        </a>
+                        <a href="{{ url_for('faculty_announcements') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-bullhorn mr-1.5 text-yellow-500"></i>Announcements
+                        </a>
+                        <a href="{{ url_for('faculty_reports') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-chart-column mr-1.5 text-teal-600"></i>Reports
+                        </a>
+                    {% elif current_user.is_admin %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-shield-halved mr-1.5 text-brand-500"></i>Overview
+                        </a>
+                        <a href="{{ url_for('admin_users') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-users-gear mr-1.5 text-indigo-500"></i>Manage Accounts
+                        </a>
+                        <a href="{{ url_for('admin_subjects') }}" class="nav-item px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-600 hover:bg-slate-100 transition">
+                            <i class="fa-solid fa-book-bookmark mr-1.5 text-emerald-500"></i>Subjects & Faculty
+                        </a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+
+                <!-- Right Action Buttons -->
+                <div class="flex items-center space-x-3">
+                    {% if current_user.is_authenticated %}
+                        <!-- Role Badge -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
+                            {% if current_user.is_student %}bg-blue-100 text-blue-800
+                            {% elif current_user.is_faculty %}bg-emerald-100 text-emerald-800
+                            {% else %}bg-purple-100 text-purple-800{% endif %}">
+                            <i class="fa-solid 
+                                {% if current_user.is_student %}fa-user
+                                {% elif current_user.is_faculty %}fa-chalkboard-user
+                                {% else %}fa-crown{% endif %} mr-1"></i>
+                            {{ current_user.role|capitalize }}
+                        </span>
+
+                        <!-- User Profile Info -->
+                        <div class="flex items-center space-x-2 pl-2 border-l border-slate-200">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                {{ current_user.full_name[:2].upper() }}
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700 hidden sm:inline-block">{{ current_user.full_name }}</span>
+                        </div>
+
+                        <!-- Switch / Logout Dropdown -->
+                        <div class="relative group">
+                            <button class="p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition" title="Role Demo Switcher">
+                                <i class="fa-solid fa-shuffle"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 hidden group-hover:block transition-all z-50">
+                                <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Quick Switch Demo</div>
+                                <a href="{{ url_for('demo_login', role='student') }}" class="flex items-center px-3 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700">
+                                    <i class="fa-solid fa-user-graduate w-5 text-blue-500"></i>Student (Alex Mercer)
+                                </a>
+                                <a href="{{ url_for('demo_login', role='faculty') }}" class="flex items-center px-3 py-2 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                                    <i class="fa-solid fa-chalkboard-user w-5 text-emerald-500"></i>Faculty (Dr. Sarah Chen)
+                                </a>
+                                <a href="{{ url_for('demo_login', role='admin') }}" class="flex items-center px-3 py-2 text-xs font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700">
+                                    <i class="fa-solid fa-shield-halved w-5 text-purple-500"></i>Admin (System Admin)
+                                </a>
+                                <div class="border-t border-slate-100 my-1"></div>
+                                <a href="{{ url_for('logout') }}" class="flex items-center px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i>Sign Out
+                                </a>
+                            </div>
+                        </div>
+
+                        <a href="{{ url_for('logout') }}" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="Sign Out">
+                            <i class="fa-solid fa-power-off"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="text-sm font-semibold text-slate-700 hover:text-brand-600 px-3 py-2 rounded-lg transition">Sign In</a>
+                        <a href="{{ url_for('register') }}" class="text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg shadow-sm shadow-brand-500/20 transition">Student Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Notifications -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flex items-center justify-between p-4 mb-3 rounded-xl border text-sm font-medium shadow-sm transition-all
+                        {% if category == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-200
+                        {% elif category == 'danger' %}bg-rose-50 text-rose-800 border-rose-200
+                        {% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200
+                        {% else %}bg-indigo-50 text-indigo-800 border-indigo-200{% endif %}" role="alert">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid 
+                                {% if category == 'success' %}fa-circle-check text-emerald-500
+                                {% elif category == 'danger' %}fa-triangle-exclamation text-rose-500
+                                {% elif category == 'warning' %}fa-circle-exclamation text-amber-500
+                                {% else %}fa-circle-info text-indigo-500{% endif %}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Platform Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2 text-slate-500 text-sm">
+                <i class="fa-solid fa-graduation-cap text-brand-600"></i>
+                <span class="font-medium text-slate-700">SmartEdu Ecosystem</span>
+                <span>• Intelligent Academic Learning & Management Platform</span>
+            </div>
+            <div class="flex items-center space-x-4 text-xs text-slate-400">
+                <span>Student • Faculty • Administrator Roles</span>
+                <span>•</span>
+                <span class="text-emerald-600 font-semibold flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5 animate-pulse"></span>System Healthy</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App interactivity scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

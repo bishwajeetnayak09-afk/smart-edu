@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Quizzes & Tests - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Manage & Create Quizzes</h1>
+            <p class="text-xs text-slate-500 mt-1">Design timed multiple-choice assessments, auto-grade submissions, and review student scores</p>
+        </div>
+        <button onclick="document.getElementById('createQuizModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Create New Quiz</span>
+        </button>
+    </div>
+
+    <!-- Quizzes Table & Cards -->
+    <div class="space-y-6">
+        {% for q in quizzes %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">{{ q.subject.code }}</span>
+                        <span class="text-xs text-slate-400">• {{ q.subject.name }}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900">{{ q.title }}</h3>
+                    <p class="text-xs text-slate-500">{{ q.description }}</p>
+                </div>
+
+                <div class="flex items-center space-x-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Questions</span>
+                        <span class="font-bold text-slate-800">{{ q.questions|length }} Items ({{ q.total_marks }} pts)</span>
+                    </div>
+                    <div class="border-l border-slate-200 pl-3">
+                        <span class="text-slate-400 block text-[10px] uppercase">Time Limit</span>
+                        <span class="font-bold text-slate-800">{{ q.time_limit_minutes }} Mins</span>
+                    </div>
+                    <div class="border-l border-slate-200 pl-3">
+                        <span class="text-slate-400 block text-[10px] uppercase">Attempts</span>
+                        <span class="font-bold text-emerald-600">{{ q.attempts|length }} Submitted</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Attempts Breakdown -->
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Student Results Ledger</span>
+                {% if q.attempts %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-700">
+                        <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-2">Student Name</th>
+                                <th class="px-4 py-2">Roll Number</th>
+                                <th class="px-4 py-2 text-center">Score</th>
+                                <th class="px-4 py-2 text-center">Percentage</th>
+                                <th class="px-4 py-2 text-right">Submitted At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for att in q.attempts %}
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="px-4 py-2.5 font-bold text-slate-900">{{ att.student.full_name }}</td>
+                                <td class="px-4 py-2.5 font-mono text-slate-500">{{ att.student.identifier }}</td>
+                                <td class="px-4 py-2.5 text-center font-bold">{{ att.score }} / {{ att.total_possible }}</td>
+                                <td class="px-4 py-2.5 text-center">
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold {% if att.percentage >= 70 %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+                                        {{ att.percentage }}%
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2.5 text-right text-slate-400">{{ att.submitted_at.strftime('%b %d, %I:%M %p') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 italic">No students have taken this quiz yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+            No quizzes created yet. Click "Create New Quiz" above.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Create Quiz with Dynamic Questions -->
+<div id="createQuizModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Create New Timed Quiz</h3>
+            <button onclick="document.getElementById('createQuizModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('faculty_quizzes') }}" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Subject</label>
+                    <select name="subject_id" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                        {% for subj in taught_subjects %}
+                        <option value="{{ subj.id }}">{{ subj.code }} - {{ subj.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Quiz Title</label>
+                    <input type="text" name="title" placeholder="e.g. Unit 2 Checkpoint: Graph Search" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Time Limit (Minutes)</label>
+                    <input type="number" name="time_limit_minutes" value="15" min="5" max="180" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Due In (Days)</label>
+                    <input type="number" name="due_days" value="7" min="1" max="60" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Quiz Instructions / Description</label>
+                <textarea name="description" rows="2" placeholder="Brief outline of chapters covered..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <!-- Pre-configured Question 1 -->
+            <input type="hidden" name="question_count" value="2">
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                <span class="font-bold text-slate-800 uppercase block text-[11px]">Question #1</span>
+                <input type="text" name="q_1_text" placeholder="Question statement..." required value="What is the worst-case time complexity of QuickSort without random pivot?" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" name="q_1_a" placeholder="Option A" value="O(N log N)" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_1_b" placeholder="Option B" value="O(N^2)" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_1_c" placeholder="Option C" value="O(log N)" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_1_d" placeholder="Option D" value="O(N)" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600">Correct Option</label>
+                        <select name="q_1_correct" class="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white">
+                            <option value="A">A</option>
+                            <option value="B" selected>B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600">Marks</label>
+                        <input type="number" name="q_1_marks" value="2" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                <span class="font-bold text-slate-800 uppercase block text-[11px]">Question #2</span>
+                <input type="text" name="q_2_text" placeholder="Question statement..." required value="Which data structure is utilized in Breadth-First Search (BFS) graph traversal?" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" name="q_2_a" placeholder="Option A" value="Stack" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_2_b" placeholder="Option B" value="Queue" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_2_c" placeholder="Option C" value="Priority Queue" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="text" name="q_2_d" placeholder="Option D" value="Binary Search Tree" required class="p-2 rounded-lg border border-slate-200 text-xs">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600">Correct Option</label>
+                        <select name="q_2_correct" class="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white">
+                            <option value="A">A</option>
+                            <option value="B" selected>B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600">Marks</label>
+                        <input type="number" name="q_2_marks" value="2" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('createQuizModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow">
+                    Publish Quiz
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

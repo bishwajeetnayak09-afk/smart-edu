@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Broadcast Announcements - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Class Announcements</h1>
+            <p class="text-xs text-slate-500 mt-1">Broadcast important reminders, exam dates, syllabus updates, and urgent alerts</p>
+        </div>
+        <button onclick="document.getElementById('postAnnModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-bullhorn text-xs"></i>
+            <span>Post New Announcement</span>
+        </button>
+    </div>
+
+    <!-- Announcements Feed -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for ann in announcements %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold
+                        {% if ann.subject %}bg-emerald-100 text-emerald-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                        {{ ann.subject.code if ann.subject else 'Global / All Students' }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                        {% if ann.priority == 'urgent' %}bg-rose-100 text-rose-700
+                        {% elif ann.priority == 'info' %}bg-blue-100 text-blue-700
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {{ ann.priority }}
+                    </span>
+                </div>
+
+                <h3 class="text-base font-bold text-slate-900 leading-snug">{{ ann.title }}</h3>
+                <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{{ ann.content }}</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>By {{ ann.faculty.full_name }}</span>
+                <span>{{ ann.created_at.strftime('%b %d, %Y - %I:%M %p') }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+            No announcements broadcasted yet. Click "Post New Announcement" above.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Post Announcement -->
+<div id="postAnnModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Broadcast Announcement</h3>
+            <button onclick="document.getElementById('postAnnModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('faculty_announcements') }}" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Target Audience</label>
+                <select name="subject_id" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                    <option value="all">Broadcast to All Students</option>
+                    {% for subj in taught_subjects %}
+                    <option value="{{ subj.id }}">{{ subj.code }} - {{ subj.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Priority Level</label>
+                    <select name="priority" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                        <option value="normal">Normal</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="info">Info / General</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Title</label>
+                    <input type="text" name="title" placeholder="e.g. Mid-term Exam Date" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Announcement Message</label>
+                <textarea name="content" rows="4" placeholder="Write instructions, location, or exam guidelines..." required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('postAnnModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow">
+                    Broadcast Now
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Assigned Students & Progress Radar - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Filter Tabs -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Enrolled Students & Progress Radar</h1>
+            <p class="text-xs text-slate-500 mt-1">Supervise class roster, track academic benchmarks, and identify struggling students</p>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+            <a href="{{ url_for('faculty_students') }}"
+                class="px-3.5 py-1.5 rounded-lg transition {% if not filter_struggling %}bg-white text-slate-900 shadow-sm font-bold{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                All Students ({{ student_cards|length if not filter_struggling else 'Roster' }})
+            </a>
+            <a href="{{ url_for('faculty_students', filter='struggling') }}"
+                class="px-3.5 py-1.5 rounded-lg transition flex items-center space-x-1.5 {% if filter_struggling %}bg-rose-600 text-white shadow-sm font-bold{% else %}text-rose-700 hover:bg-rose-50{% endif %}">
+                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                <span>Struggling Students Only</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Student Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in student_cards %}
+        {% set st = item.student %}
+        {% set ana = item.analysis %}
+        <div class="bg-white rounded-2xl border {% if item.is_struggling %}border-rose-300 ring-1 ring-rose-300/40{% else %}border-slate-200{% endif %} p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition">
+            
+            <div class="space-y-4">
+                <!-- Top Row: Student info & alert status -->
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-2xl {% if item.is_struggling %}bg-rose-100 text-rose-700{% else %}bg-brand-100 text-brand-700{% endif %} flex items-center justify-center font-bold text-lg">
+                            {{ st.full_name[:2].upper() }}
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">{{ st.full_name }}</h3>
+                            <span class="text-xs text-slate-500 font-mono block">{{ st.identifier }} • Sem {{ st.semester }}</span>
+                        </div>
+                    </div>
+
+                    {% if item.is_struggling %}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                            Struggling
+                        </span>
+                    {% else %}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            On Track
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Stats Dual Column -->
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold">Composite Score</span>
+                        <span class="text-base font-extrabold {% if ana.overall_score < 60 %}text-rose-600{% else %}text-slate-900{% endif %}">
+                            {{ ana.overall_score }}%
+                        </span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase font-bold">Attendance Ratio</span>
+                        <span class="text-base font-extrabold {% if ana.overall_attendance < 75 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                            {{ ana.overall_attendance }}%
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Weak Subjects Breakdown -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Identified Subject Status</span>
+                    <div class="space-y-1">
+                        {% for subj in ana.subjects_breakdown %}
+                        <div class="flex items-center justify-between text-xs py-1 px-2 rounded-lg {% if subj.is_weak %}bg-rose-50 text-rose-900 font-medium{% else %}bg-slate-50/60 text-slate-700{% endif %}">
+                            <span class="font-mono text-[11px]">{{ subj.code }}</span>
+                            <div class="flex items-center space-x-2">
+                                <span>{{ subj.composite_score }}%</span>
+                                <span class="text-[10px] text-slate-400">({{ subj.attendance_pct }}% Att)</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if item.is_struggling %}
+                <!-- Faculty Intervention Advice -->
+                <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-800 space-y-1">
+                    <span class="font-bold block flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Action Required:
+                    </span>
+                    <p>Attendance is below the 75% cutoff or multiple quizzes scored below pass grade. Recommend assigning revision remedial sessions.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">{{ st.email }}</span>
+                <a href="mailto:{{ st.email }}" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition flex items-center space-x-1">
+                    <i class="fa-solid fa-envelope text-[10px]"></i>
+                    <span>Contact</span>
+                </a>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+            No students match the selected filter.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

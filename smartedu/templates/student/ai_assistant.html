@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}AI Study Assistant - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-130px)] flex flex-col space-y-4">
+
+    <!-- Header bar with Subject & Study Mode selectors -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-lg shadow-md shadow-purple-500/20">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-extrabold text-slate-900 flex items-center">
+                    SmartEdu AI Study Assistant
+                    <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Online & Ready</span>
+                </h1>
+                <p class="text-xs text-slate-400">Ask questions, generate practice questions, or get study schedules</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Subject Context Dropdown -->
+            <div class="flex items-center space-x-1 text-xs">
+                <span class="text-slate-400 font-medium">Subject:</span>
+                <select id="subjectContext" class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="General">General / All Subjects</option>
+                    {% for subj in subjects %}
+                    <option value="{{ subj.name }}">{{ subj.code }} - {{ subj.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="flex items-center space-x-1 text-xs">
+                <span class="text-slate-400 font-medium">Mode:</span>
+                <select id="studyMode" class="px-2.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50 text-purple-800 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="explain">💡 Explain Concept</option>
+                    <option value="quiz">📝 Mini Practice Quiz</option>
+                    <option value="solve">🧮 Step-by-Step Solver</option>
+                    <option value="summary">📌 Cheatsheet / Flashcard</option>
+                    <option value="timetable">📅 Personalized Study Plan</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggested Quick Prompts Row -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-1 text-xs text-slate-600 shrink-0">
+        <span class="text-[11px] font-bold uppercase text-slate-400 whitespace-nowrap"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>Try:</span>
+        <button onclick="setPrompt('Explain the difference between B-Trees and B+ Trees in DBMS', 'Database Management Systems', 'explain')"
+            class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 whitespace-nowrap transition">
+            DBMS: B-Tree vs B+ Tree
+        </button>
+        <button onclick="setPrompt('How does Dijkstra Algorithm find the shortest path?', 'Data Structures & Algorithms', 'explain')"
+            class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 whitespace-nowrap transition">
+            DSA: Dijkstra's Algorithm
+        </button>
+        <button onclick="setPrompt('Quiz me on TCP/IP and OSI Transport Layer protocols', 'Computer Networks', 'quiz')"
+            class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 whitespace-nowrap transition">
+            Networks: Quiz Me on Transport Layer
+        </button>
+        <button onclick="setPrompt('Create an optimal weekly study timetable for my upcoming exams', 'General', 'timetable')"
+            class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 whitespace-nowrap transition">
+            Study: Generate Exam Timetable
+        </button>
+        <button onclick="setPrompt('Cheatsheet on Virtual Memory and Page Replacement Algorithms', 'Operating Systems', 'summary')"
+            class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 whitespace-nowrap transition">
+            OS: Virtual Memory Cheatsheet
+        </button>
+    </div>
+
+    <!-- Chat Messages Container -->
+    <div id="chatContainer" class="flex-1 bg-white rounded-2xl border border-slate-200 p-6 overflow-y-auto space-y-4 shadow-sm">
+        
+        <!-- Welcome Bot Message -->
+        <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-sm">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="max-w-2xl bg-purple-50/70 border border-purple-100 rounded-2xl p-4 text-xs text-slate-800 space-y-2 leading-relaxed">
+                <div class="font-bold text-purple-900 flex items-center justify-between">
+                    <span>SmartEdu AI Tutor</span>
+                    <span class="text-[10px] text-purple-400 font-normal">Active</span>
+                </div>
+                <p>
+                    Hello <strong>{{ current_user.full_name }}</strong>! I am your 24/7 personalized academic assistant.
+                    I can explain topics simply, quiz your retention, solve derivation problems, or build you a revision timetable.
+                </p>
+                <p class="text-slate-500 text-[11px]">
+                    What topic or subject would you like to explore today?
+                </p>
+            </div>
+        </div>
+
+        <!-- Render Previous Chat History -->
+        {% for msg in history %}
+            {% if msg.sender == 'user' %}
+            <div class="flex items-start justify-end space-x-3">
+                <div class="max-w-xl bg-brand-600 text-white rounded-2xl rounded-tr-none p-3.5 text-xs space-y-1 shadow-sm">
+                    <div class="flex items-center justify-between text-[10px] text-brand-200">
+                        <span class="font-semibold">{{ current_user.full_name }}</span>
+                        <span>{{ msg.timestamp.strftime('%I:%M %p') }}</span>
+                    </div>
+                    <p class="whitespace-pre-wrap">{{ msg.message }}</p>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">
+                    {{ current_user.full_name[:2].upper() }}
+                </div>
+            </div>
+            {% else %}
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-sm">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="max-w-2xl bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-none p-4 text-xs text-slate-800 space-y-2 leading-relaxed shadow-sm">
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-semibold border-b border-slate-200/60 pb-1.5 mb-1">
+                        <span class="text-purple-700"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Tutor ({{ msg.subject_tag }})</span>
+                        <span>{{ msg.timestamp.strftime('%I:%M %p') }}</span>
+                    </div>
+                    <div class="prose prose-xs max-w-none text-slate-800 whitespace-pre-wrap font-sans">{{ msg.message }}</div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+
+    </div>
+
+    <!-- Message Input Bar -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm shrink-0">
+        <form id="aiChatForm" class="flex items-center space-x-2">
+            <div class="flex-1 relative">
+                <input type="text" id="aiMessageInput" placeholder="Ask your question or topic (e.g. 'Explain Dijkstra algorithm step-by-step')..."
+                    class="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-10"
+                    autocomplete="off" required>
+            </div>
+            <button type="submit" id="sendBtn"
+                class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition flex items-center space-x-2 shrink-0">
+                <span>Ask AI</span>
+                <i class="fa-solid fa-paper-plane text-[11px]"></i>
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const chatContainer = document.getElementById('chatContainer');
+    const aiChatForm = document.getElementById('aiChatForm');
+    const aiMessageInput = document.getElementById('aiMessageInput');
+    const subjectContext = document.getElementById('subjectContext');
+    const studyMode = document.getElementById('studyMode');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Scroll to bottom
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    scrollToBottom();
+
+    // Check URL parameters for pre-filled query
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('query');
+    const initialSubject = urlParams.get('subject');
+    if (initialSubject) {
+        for (let i = 0; i < subjectContext.options.length; i++) {
+            if (subjectContext.options[i].value === initialSubject) {
+                subjectContext.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    if (initialQuery) {
+        aiMessageInput.value = initialQuery;
+    }
+
+    function setPrompt(promptText, subject, mode) {
+        aiMessageInput.value = promptText;
+        if (subject) {
+            for (let i = 0; i < subjectContext.options.length; i++) {
+                if (subjectContext.options[i].text.includes(subject) || subjectContext.options[i].value === subject) {
+                    subjectContext.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        if (mode) {
+            studyMode.value = mode;
+        }
+        aiMessageInput.focus();
+    }
+
+    aiChatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const text = aiMessageInput.value.trim();
+        if (!text) return;
+
+        const subject = subjectContext.value;
+        const mode = studyMode.value;
+
+        // Append User Bubble
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const userHtml = `
+            <div class="flex items-start justify-end space-x-3">
+                <div class="max-w-xl bg-brand-600 text-white rounded-2xl rounded-tr-none p-3.5 text-xs space-y-1 shadow-sm">
+                    <div class="flex items-center justify-between text-[10px] text-brand-200">
+                        <span class="font-semibold">{{ current_user.full_name }}</span>
+                        <span>${now}</span>
+                    </div>
+                    <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs shrink-0 font-bold">
+                    {{ current_user.full_name[:2].upper() }}
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', userHtml);
+        aiMessageInput.value = '';
+        scrollToBottom();
+
+        // Thinking indicator bubble
+        const thinkingId = 'thinking_' + Date.now();
+        const thinkingHtml = `
+            <div id="${thinkingId}" class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-sm">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-none p-3 text-xs text-slate-500 flex items-center space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-purple-500 animate-ping"></div>
+                    <span>AI Assistant is analyzing and crafting your explanation...</span>
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', thinkingHtml);
+        scrollToBottom();
+
+        sendBtn.disabled = true;
+
+        try {
+            const resp = await fetch('/api/student/ai-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    subject: subject,
+                    mode: mode
+                })
+            });
+
+            const data = await resp.json();
+            const thinkingElem = document.getElementById(thinkingId);
+            if (thinkingElem) thinkingElem.remove();
+
+            if (resp.ok) {
+                const aiHtml = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs shrink-0 font-bold shadow-sm">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="max-w-2xl bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-none p-4 text-xs text-slate-800 space-y-2 leading-relaxed shadow-sm">
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 font-semibold border-b border-slate-200/60 pb-1.5 mb-1">
+                                <span class="text-purple-700"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Tutor (${subject})</span>
+                                <span>${data.timestamp}</span>
+                            </div>
+                            <div class="prose prose-xs max-w-none text-slate-800 whitespace-pre-wrap font-sans">${escapeHtml(data.reply)}</div>
+                        </div>
+                    </div>
+                `;
+                chatContainer.insertAdjacentHTML('beforeend', aiHtml);
+            } else {
+                alert('Error: ' + (data.error || 'Failed to get response'));
+            }
+        } catch (err) {
+            const thinkingElem = document.getElementById(thinkingId);
+            if (thinkingElem) thinkingElem.remove();
+            alert('Failed to connect to AI study assistant.');
+        } finally {
+            sendBtn.disabled = false;
+            scrollToBottom();
+        }
+    });
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}

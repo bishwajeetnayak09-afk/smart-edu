@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}SmartEdu - Next Generation Intelligent Academic Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-12 pb-12">
+
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-brand-800 to-slate-900 text-white p-8 md:p-14 shadow-2xl">
+        <div class="relative z-10 max-w-3xl space-y-6">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold backdrop-blur">
+                <i class="fa-solid fa-sparkles text-amber-300"></i>
+                <span>Smart Learning • Real-Time Analytics • AI Study Assistant</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+                Empowering Students, Faculty & Administrators in One Unified Platform
+            </h1>
+            <p class="text-lg md:text-xl text-slate-300 leading-relaxed">
+                SmartEdu combines real-time attendance tracking, interactive quizzes, automated grading, personalized study timetables, and an AI study assistant to elevate academic outcomes.
+            </p>
+            <div class="flex flex-wrap items-center gap-4 pt-4">
+                <a href="{{ url_for('login') }}" class="px-6 py-3.5 rounded-xl bg-white text-brand-900 font-bold hover:bg-slate-100 transition shadow-lg shadow-black/20 flex items-center space-x-2">
+                    <span>Sign In to Your Account</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+                <a href="{{ url_for('register') }}" class="px-6 py-3.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold transition border border-indigo-400/30 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus text-xs"></i>
+                    <span>Student Registration</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Decorative background elements -->
+        <div class="absolute -right-20 -top-20 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-10 bottom-0 opacity-15 hidden lg:block pointer-events-none">
+            <i class="fa-solid fa-graduation-cap text-[280px]"></i>
+        </div>
+    </div>
+
+    <!-- Quick Demo Logins Section -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">Fast Test Exploration</span>
+                <h2 class="text-2xl font-bold text-slate-900">Explore Instant Demo Portals</h2>
+                <p class="text-sm text-slate-500">Jump right into each role with 1-click test credentials.</p>
+            </div>
+            <span class="inline-flex items-center text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-bolt mr-1.5 text-emerald-500"></i>Pre-loaded Realistic Data
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Student Demo Card -->
+            <div class="relative group rounded-xl border border-blue-200 bg-gradient-to-b from-blue-50/50 to-white p-6 hover:shadow-lg transition flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl mb-4 shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Student Portal</h3>
+                    <p class="text-xs text-blue-700 font-medium mb-3">Logged in as Alex Mercer (STU-2024-001)</p>
+                    <ul class="text-xs text-slate-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Study materials, notes & slides</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Interactive AI Study Assistant</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Quizzes, assignments & auto-grading</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Personalized study timetable & weak areas</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('demo_login', role='student') }}" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-center text-sm shadow-sm transition flex items-center justify-center space-x-2">
+                    <span>Enter Student Portal</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+
+            <!-- Faculty Demo Card -->
+            <div class="relative group rounded-xl border border-emerald-200 bg-gradient-to-b from-emerald-50/50 to-white p-6 hover:shadow-lg transition flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl mb-4 shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Faculty Portal</h3>
+                    <p class="text-xs text-emerald-700 font-medium mb-3">Logged in as Dr. Sarah Chen (FAC-101)</p>
+                    <ul class="text-xs text-slate-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Mark attendance & track attendance %</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Struggling Students Early-Alert Radar</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Upload notes, create quizzes & grade</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Broadcast announcements & view reports</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('demo_login', role='faculty') }}" class="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-center text-sm shadow-sm transition flex items-center justify-center space-x-2">
+                    <span>Enter Faculty Portal</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+
+            <!-- Admin Demo Card -->
+            <div class="relative group rounded-xl border border-purple-200 bg-gradient-to-b from-purple-50/50 to-white p-6 hover:shadow-lg transition flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xl mb-4 shadow-md shadow-purple-500/20">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Admin Portal</h3>
+                    <p class="text-xs text-purple-700 font-medium mb-3">Logged in as System Administrator</p>
+                    <ul class="text-xs text-slate-600 space-y-2 mb-6">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-purple-500 mr-2"></i>Manage student and faculty accounts</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-purple-500 mr-2"></i>Add, edit, and remove subjects</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-purple-500 mr-2"></i>Assign faculty to specific subjects</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-purple-500 mr-2"></i>System-wide activity and metrics</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('demo_login', role='admin') }}" class="w-full py-2.5 px-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-center text-sm shadow-sm transition flex items-center justify-center space-x-2">
+                    <span>Enter Admin Portal</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Matrix Grid -->
+    <div class="space-y-8">
+        <div class="text-center max-w-2xl mx-auto">
+            <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">Comprehensive Architecture</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-1">Built to Fulfill All Academic Needs</h2>
+            <p class="text-sm text-slate-500 mt-2">Explore the complete feature breakdown across Students, Faculty, and Admin.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Student Access Features -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900">Student Access</h3>
+                        <p class="text-xs text-slate-400">Autonomous learning and insights</p>
+                    </div>
+                </div>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-robot text-purple-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">AI Study Assistant</strong>
+                            Ask concept questions, generate practice mini-quizzes, and get step-by-step problem derivations.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-calendar-days text-indigo-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Personalized Timetable</strong>
+                            Dynamic weekly study schedule tailored to balance tough subjects and lecture hours.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-chart-line text-rose-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Weak Subjects Diagnostic</strong>
+                            Automatic detection of low-scoring and low-attendance subjects with clear remediation advice.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-file-pdf text-blue-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Subject Materials & Quizzes</strong>
+                            Download lecture notes, take timed quizzes, and upload assignment submissions.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Faculty Access Features -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900">Faculty Access</h3>
+                        <p class="text-xs text-slate-400">Instruction & student oversight</p>
+                    </div>
+                </div>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-radar text-rose-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Identify Struggling Students</strong>
+                            Instant detection of students scoring below 50% or with attendance falling under 75%.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-clipboard-check text-cyan-600 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Attendance & Marking</strong>
+                            Quick 1-click attendance taking by lecture date and subject statistics.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-circle-question text-amber-500 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Quiz & Assignment Creator</strong>
+                            Publish customized multiple-choice tests with timers and grade assignment submissions.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-bullhorn text-teal-600 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Announcements & Reports</strong>
+                            Broadcast urgent alerts and analyze class performance distribution charts.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Access Features -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900">Admin Panel</h3>
+                        <p class="text-xs text-slate-400">Institutional control & setup</p>
+                    </div>
+                </div>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-users-gear text-purple-600 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Manage Students & Faculty</strong>
+                            Provision new accounts, reset access, toggle active/inactive status, and remove accounts.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-book-bookmark text-emerald-600 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Subject & Course Management</strong>
+                            Create new curriculum subjects, define credits, and assign faculty instructors.
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-database text-brand-600 mt-1"></i>
+                        <div>
+                            <strong class="text-slate-800 block text-xs">Database Reset & Demo Seeding</strong>
+                            One-click button to reset the database to a pristine realistic state anytime.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

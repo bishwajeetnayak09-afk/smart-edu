@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Study Materials - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Upload & Manage Study Materials</h1>
+            <p class="text-xs text-slate-500 mt-1">Distribute lecture slides, syllabus documents, and exam reference handouts</p>
+        </div>
+        <button onclick="document.getElementById('uploadMaterialModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+            <span>Upload New Material</span>
+        </button>
+    </div>
+
+    <!-- Materials Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for mat in materials %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition">
+            
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">
+                        {{ mat.subject.code }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                        {% if mat.material_type == 'notes' %}bg-blue-100 text-blue-700
+                        {% elif mat.material_type == 'slides' %}bg-amber-100 text-amber-700
+                        {% elif mat.material_type == 'cheatsheet' %}bg-purple-100 text-purple-700
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {{ mat.material_type }}
+                    </span>
+                </div>
+
+                <h3 class="text-base font-bold text-slate-900 leading-snug">{{ mat.title }}</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">{{ mat.description }}</p>
+
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+                    <span class="flex items-center"><i class="fa-solid fa-file-pdf mr-1.5 text-rose-500"></i>{{ mat.file_name }}</span>
+                    <span class="font-bold text-slate-700">{{ mat.file_size_kb }} KB</span>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">{{ mat.created_at.strftime('%b %d, %Y') }}</span>
+                <a href="{{ url_for('download_file', filename=mat.file_name) }}"
+                    class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs transition flex items-center space-x-1">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span>Download</span>
+                </a>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+            No study materials uploaded yet. Click "Upload New Material" above.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Upload Material -->
+<div id="uploadMaterialModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Upload Study Material</h3>
+            <button onclick="document.getElementById('uploadMaterialModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('faculty_materials') }}" enctype="multipart/form-data" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Target Subject</label>
+                <select name="subject_id" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                    {% for subj in taught_subjects %}
+                    <option value="{{ subj.id }}">{{ subj.code }} - {{ subj.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Material Title</label>
+                <input type="text" name="title" placeholder="e.g. Module 3: Binary Trees & AVL Rotations" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Document Type</label>
+                    <select name="material_type" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                        <option value="notes">Lecture Notes</option>
+                        <option value="slides">Presentation Slides</option>
+                        <option value="cheatsheet">Cheatsheet / Handout</option>
+                        <option value="reference">Reference Book</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Upload File (PDF/PPT)</label>
+                    <input type="file" name="material_file" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-800">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Description & Outline</label>
+                <textarea name="description" rows="3" placeholder="Summary of chapters covered, key theorems, homework hints..." required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('uploadMaterialModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow">
+                    Publish Material
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

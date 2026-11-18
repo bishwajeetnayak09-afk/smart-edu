@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Assignments & Student Grading - SmartEdu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900">Assignments & Evaluation Desk</h1>
+            <p class="text-xs text-slate-500 mt-1">Post assignments, inspect student solutions, assign marks, and write constructive feedback</p>
+        </div>
+        <button onclick="document.getElementById('createAssignmentModal').classList.remove('hidden')"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Post New Assignment</span>
+        </button>
+    </div>
+
+    <!-- Assignments List -->
+    <div class="space-y-6">
+        {% for asg in assignments %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">{{ asg.subject.code }}</span>
+                        <span class="text-xs text-slate-400">• {{ asg.subject.name }}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900">{{ asg.title }}</h3>
+                    <p class="text-xs text-slate-500">{{ asg.description }}</p>
+                </div>
+
+                <div class="flex items-center space-x-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Max Marks</span>
+                        <span class="font-bold text-slate-800">{{ asg.max_marks }} Pts</span>
+                    </div>
+                    <div class="border-l border-slate-200 pl-3">
+                        <span class="text-slate-400 block text-[10px] uppercase">Deadline</span>
+                        <span class="font-bold text-slate-800">{{ asg.due_date.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="border-l border-slate-200 pl-3">
+                        <span class="text-slate-400 block text-[10px] uppercase">Submissions</span>
+                        <span class="font-bold text-emerald-600">{{ asg.submissions|length }} Total</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Submissions Table -->
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Student Submissions & Evaluation</span>
+                {% if asg.submissions %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-700">
+                        <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-2.5">Student</th>
+                                <th class="px-4 py-2.5">Submission Solution</th>
+                                <th class="px-4 py-2.5 text-center">Marks Awarded</th>
+                                <th class="px-4 py-2.5">Feedback</th>
+                                <th class="px-4 py-2.5 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for sub in asg.submissions %}
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="px-4 py-3">
+                                    <span class="font-bold text-slate-900 block">{{ sub.student.full_name }}</span>
+                                    <span class="text-slate-400 font-mono text-[11px]">{{ sub.student.identifier }}</span>
+                                </td>
+                                <td class="px-4 py-3 max-w-xs">
+                                    <p class="text-slate-600 line-clamp-2 text-[11px]">{{ sub.submission_text }}</p>
+                                    {% if sub.file_path %}
+                                    <span class="text-[10px] text-brand-600 font-semibold block mt-0.5"><i class="fa-solid fa-paperclip mr-1"></i>{{ sub.file_path }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    {% if sub.marks_obtained is not none %}
+                                    <span class="font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                        {{ sub.marks_obtained }} / {{ asg.max_marks }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-amber-600 font-semibold text-[11px] bg-amber-50 px-2 py-0.5 rounded">
+                                        Ungraded
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-slate-500 text-[11px] max-w-xs">
+                                    {{ sub.feedback or 'No feedback provided yet.' }}
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button onclick="openGradeModal({{ sub.id }}, '{{ sub.student.full_name }}', {{ sub.marks_obtained or 0 }}, '{{ sub.feedback or '' }}', {{ asg.max_marks }})"
+                                        class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-[11px] transition">
+                                        <i class="fa-solid fa-stamp mr-1"></i>{% if sub.marks_obtained is not none %}Update Grade{% else %}Grade Now{% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 italic">No submissions for this assignment yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+            No assignments created yet. Click "Post New Assignment" above.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Modal: Post New Assignment -->
+<div id="createAssignmentModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Post New Assignment</h3>
+            <button onclick="document.getElementById('createAssignmentModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('faculty_assignments') }}" class="space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Subject</label>
+                <select name="subject_id" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 bg-white">
+                    {% for subj in taught_subjects %}
+                    <option value="{{ subj.id }}">{{ subj.code }} - {{ subj.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Assignment Title</label>
+                <input type="text" name="title" placeholder="e.g. Design Relational 3NF Schema" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Maximum Marks</label>
+                    <input type="number" name="max_marks" value="100" min="10" max="500" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Due In (Days)</label>
+                    <input type="number" name="due_days" value="7" min="1" max="60" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Problem Specifications & Criteria</label>
+                <textarea name="description" rows="3" placeholder="Explain the problem requirements, expected deliverables, and test cases..." required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('createAssignmentModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow">
+                    Publish Assignment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Grade Submission -->
+<div id="gradeModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Evaluate Submission</h3>
+            <button onclick="document.getElementById('gradeModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('faculty_assignments') }}" class="space-y-4 text-xs">
+            <input type="hidden" name="action" value="grade">
+            <input type="hidden" name="submission_id" id="modalSubmissionId">
+
+            <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Grading Student</span>
+                <span id="modalStudentName" class="text-sm font-bold text-slate-900"></span>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Marks Obtained (out of <span id="modalMaxMarks"></span>)</label>
+                <input type="number" step="0.5" name="marks" id="modalMarksInput" required class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Faculty Feedback & Guidance</label>
+                <textarea name="feedback" id="modalFeedbackInput" rows="3" placeholder="Provide actionable feedback on code structure or accuracy..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('gradeModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow">
+                    Submit Grade
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openGradeModal(submissionId, studentName, marks, feedback, maxMarks) {
+        document.getElementById('modalSubmissionId').value = submissionId;
+        document.getElementById('modalStudentName').textContent = studentName;
+        document.getElementById('modalMarksInput').value = marks;
+        document.getElementById('modalFeedbackInput').value = feedback;
+        document.getElementById('modalMaxMarks').textContent = maxMarks;
+        document.getElementById('gradeModal').classList.remove('hidden');
+    }
+</script>
+{% endblock %}
